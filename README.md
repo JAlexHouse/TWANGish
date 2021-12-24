@@ -1,5 +1,5 @@
-# TWANG
-A Arduino-based, 1D, LED loving, dungeon crawler. inspired by Line Wobbler by Robin B
+# TWANGish
+A Arduino-based, 1D, LED loving, dungeon crawler. inspired by Line Wobbler by Robin B, This version of TWANG is my own personal fork of the original repository, with various features and personalization 
 
 ## Video playlist
 A playlist that shows the development of TWANG and the game in both a desktop and house-sized form can be found here: https://www.youtube.com/watch?v=9yf_VINmbTE&list=PL1_Z89_x_Dff-XhOxlx6sQ38wJqe1X2M0
@@ -10,7 +10,7 @@ A playlist that shows the development of TWANG and the game in both a desktop an
 * MPU6050: https://github.com/jrowberg/i2cdevlib/tree/master/Arduino/MPU6050
 * RunningMedian: http://playground.arduino.cc/Main/RunningMedian
 
-## Hardware used:
+## Hardware (Stated by Critter):
 * Arduino MEGA/NANO
 * 3 LEDs for life indicator
 * APA102-C LED light strip. The more the better, maximum of 1000. Tested with 2x 144/meter and 12x 60/meter strips. The FastLED lib works with the less expensive WS2812 LEDs, i've not tried them but should be fine.
@@ -18,11 +18,20 @@ A playlist that shows the development of TWANG and the game in both a desktop an
 * MPU6050 accelerometer
 * Spring doorstop, I used these: http://smile.amazon.com/gp/product/B00J4Y5BU2
 
+## Hardware actually used (Stated by Me):
+* [ARDUINO MEGA (Specifically, an ELEGOO MEGA R3)](https://www.amazon.com/gp/product/B01H4ZLZLQ/ref=ppx_yo_dt_b_asin_title_o07_s00?ie=UTF8&psc=1) $16.92
+* [WS2812B LED light strip. As of 12/24, using 300 pixels. 60/meter, 16.4ft long](https://www.amazon.com/gp/product/B01CDTEID0/ref=ppx_od_dt_b_asin_title_s00?ie=UTF8&psc=1) $27.94
+* [Small, magnetic speaker](https://www.amazon.com/gp/product/B0177ABRQ6/ref=ppx_od_dt_b_asin_title_s00?ie=UTF8&psc=1) $9.35
+* [MPU6050 Accelerometer](https://www.amazon.com/gp/product/B008BOPN40/ref=ppx_yo_dt_b_asin_title_o03_s00?ie=UTF8&psc=1) $7.90
+* [5v 2a Power Supply with LED strip light adapter](https://www.amazon.com/gp/product/B07QNTF9G8/ref=ppx_yo_dt_b_asin_title_o06_s00?ie=UTF8&psc=1) $11.81
+* [Soldering station](https://www.amazon.com/gp/product/B06XZ31W3M/ref=ppx_yo_dt_b_asin_title_o01_s00?ie=UTF8&psc=1) $21.49
+* Various wires/resistors: male-to-female, male-to-male
+
 ## Enclosure
 Files to print your own enclosure can be found here: http://www.thingiverse.com/thing:1116899
 
 ## Overview
-TWANG was developed quickly to make my Halloween lights interactive, the code is fairly well commmented but could be improved. The following is a quick overview of the code to help you understand and tweak the game to your needs.
+The following is a quick overview of TWANGish to help you understand and tweak the game to your needs.
 
 The game is played on a 1000 unit line, the position of enemies, the player, lava etc range from 0 to 1000 and the LEDs that represent them are derived using the getLED() function. You don't need to worry about this but it's good to know for things like the width of the attack and player max move speed. Regardles of the number of LEDs, everything takes place in this 1000 unit wide line.
 
