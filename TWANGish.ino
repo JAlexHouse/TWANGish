@@ -6,6 +6,7 @@
 #include "toneAC.h"
 #include "iSin.h"
 #include "RunningMedian.h"
+#include "IRremote.h"
 
 // Included libs
 #include "Enemy.h"
@@ -20,17 +21,27 @@ MPU6050 accelgyro;
 int16_t ax, ay, az;
 int16_t gx, gy, gz;
 
+// MPU SUBSTITUTE (JOYSTICK)
+//#define VRx                  A0
+//#define VRy                  A1
+//#define SW                   2
+
+// IR Remote
+int ir_result = 0;
+char* channel_selected = "NOT_GAME";
+#define IR_PIN               7
+
 // LED setup
-#define NUM_LEDS             475
-#define DATA_PIN             3
+#define NUM_LEDS             300
+#define DATA_PIN             8
 #define CLOCK_PIN            4     
-#define LED_COLOR_ORDER      BGR   //if colours aren't working, try GRB or GBR
+#define LED_COLOR_ORDER      BRG   //if colours aren't working, try GRB or GBR
 #define BRIGHTNESS           150   //Use a lower value for lower current power supplies(<2 amps)
 #define DIRECTION            1     // 0 = right to left, 1 = left to right
 #define MIN_REDRAW_INTERVAL  16    // Min redraw interval (ms) 33 = 30fps / 16 = 63fps
 #define USE_GRAVITY          1     // 0/1 use gravity (LED strip going up wall)
 #define BEND_POINT           550   // 0/1000 point at which the LED strip goes up the wall
-#define LED_TYPE             APA102//type of LED strip to use(APA102 - DotStar, WS2811 - NeoPixel) For Neopixels, uncomment line #108 and comment out line #106
+#define LED_TYPE             WS2812B//type of LED strip to use(APA102 - DotStar, WS2811 - NeoPixel) For Neopixels, uncomment line #108 and comment out line #106
 
 // GAME
 long previousMillis = 0;           // Time of the last redraw
@@ -98,16 +109,28 @@ void setup() {
     Serial.begin(9600);
     while (!Serial);
     
+    // Comment out if using MPU for player input, uncomment if using joystick
+//    pinMode(VRx, INPUT);
+//    pinMode(VRy, INPUT);
+//    pinMode(SW, INPUT_PULLUP); 
+    
     // MPU
     Wire.begin();
     accelgyro.initialize();
+
+    // IR Remote
+    IrReceiver.begin(IR_PIN, ENABLE_LED_FEEDBACK);
     
     // Fast LED
-    FastLED.addLeds<LED_TYPE, DATA_PIN, CLOCK_PIN, LED_COLOR_ORDER>(leds, NUM_LEDS);
-    //If using Neopixels, use
-    //FastLED.addLeds<LED_TYPE, DATA_PIN, LED_COLOR_ORDER>(leds, NUM_LEDS);
+    //FastLED.addLeds<LED_TYPE, DATA_PIN, CLOCK_PIN, LED_COLOR_ORDER>(leds, NUM_LEDS);
+    //If using Neopixels (no clock pin), use
+    FastLED.addLeds<LED_TYPE, DATA_PIN, LED_COLOR_ORDER>(leds, NUM_LEDS);
     FastLED.setBrightness(BRIGHTNESS);
     FastLED.setDither(1);
+    for(int i = 0; i< NUM_LEDS; i++){
+        leds[i] = CRGB(0, 0, 0);
+    }
+    FastLED.show();
     
     // Life LEDs
     for(int i = 0; i<3; i++){
@@ -121,6 +144,20 @@ void setup() {
 void loop() {
     long mm = millis();
     int brightness = 0;
+
+    if (IrReceiver.decode()) {
+      Serial.println(IrReceiver.decodedIRData.decodedRawData, HEX);
+      //IrReceiver.printIRResultShort(&Serial); // optional use new print version
+      if (IrReceiver.decodedIRData.decodedRawData != 0x0) {
+        channel_selected = "GAME";
+      }
+      
+      IrReceiver.resume(); // Enable receiving of the next value
+    }
+
+    if(channel_selected != "GAME") {
+      return;
+    }
     
     if(stage == "PLAY"){
         if(attacking){
@@ -130,12 +167,14 @@ void loop() {
         }
     }else if(stage == "DEAD"){
         SFXdead();
+    } else if (stage == "SCREENSAVER") {
+      noToneAC();
     }
     
     if (mm - previousMillis >= MIN_REDRAW_INTERVAL) {
         getInput();
-        long frameTimer = mm;
         previousMillis = mm;
+        
         
         if(abs(joystickTilt) > JOYSTICK_DEADZONE){
             lastInputTime = mm;
@@ -247,10 +286,10 @@ void loop() {
             stageStartTime = 0;
         }
         
-        Serial.print(millis()-mm);
-        Serial.print(" - ");
+//        Serial.print(millis()-mm);
+//        Serial.print(" - ");
         FastLED.show();
-        Serial.println(millis()-mm);
+//        Serial.println(millis()-mm);
     }
 }
 
@@ -309,7 +348,7 @@ void loadLevel(){
             spawnLava(350, 455, 2000, 2000, 0, "OFF");
             spawnLava(510, 610, 2000, 2000, 0, "OFF");
             spawnLava(660, 760, 2000, 2000, 0, "OFF");
-            spawnPool[0].Spawn(1000, 3800, 4, 0, 0);
+            //spawnPool[0].Spawn(1000, 3800, 4, 0, 0);
             break;
         case 8:
             // Sin enemy #2
@@ -668,7 +707,7 @@ void getInput(){
     // For example you could use 3 momentery buttons:
         // if(digitalRead(leftButtonPinNumber) == HIGH) joystickTilt = -90;
         // if(digitalRead(rightButtonPinNumber) == HIGH) joystickTilt = 90;
-        // if(digitalRead(attackButtonPinNumber) == HIGH) joystickWobble = ATTACK_THRESHOLD;
+        // if(digitalRead(attackButtonPinNumber) == HIGH) joystickWobble = ATTACK_THRESHOLD + 1;
     
     accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
     int a = (JOYSTICK_ORIENTATION == 0?ax:(JOYSTICK_ORIENTATION == 1?ay:az))/166;
@@ -680,10 +719,23 @@ void getInput(){
     MPUWobbleSamples.add(g);
     
     joystickTilt = MPUAngleSamples.getMedian();
+
+    
+    // Comment out if using MPU for player input
+//    int joystickSensor = analogRead(VRy);
+//    Serial.print("joystickSensor: ");
+//    Serial.println(joystickSensor);
+//    if (joystickSensor > 530) joystickTilt = map(joystickSensor, 0, 1023, -90, 90);
+//    if (analogRead(VRy) < 510) joystickTilt = map(joystickSensor, 0, 1023, -90, 90);
+//    if (digitalRead(SW) == 0) joystickWobble = ATTACK_THRESHOLD + 1;
+//    else joystickWobble = 0;
+
+    
     if(JOYSTICK_DIRECTION == 1) {
         joystickTilt = 0-joystickTilt;
     }
-    joystickWobble = abs(MPUWobbleSamples.getHighest());
+    // Uncomment if using MPU for player input
+     joystickWobble = abs(MPUWobbleSamples.getHighest());
 }
 
 
@@ -723,12 +775,3 @@ void SFXwin(){
 void SFXcomplete(){
     noToneAC();
 }
-
-
-
-
-
-
-
-
-
