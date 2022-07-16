@@ -28,7 +28,7 @@ int16_t gx, gy, gz;
 
 // IR Remote
 int ir_result = 0;
-char* channel_selected = "NOT_GAME";
+char* channel_selected = "PLAY";
 #define IR_PIN               7
 
 // LED setup
@@ -119,7 +119,7 @@ void setup() {
     accelgyro.initialize();
 
     // IR Remote
-    IrReceiver.begin(IR_PIN, ENABLE_LED_FEEDBACK);
+    // IrReceiver.begin(IR_PIN, ENABLE_LED_FEEDBACK);
     
     // Fast LED
     //FastLED.addLeds<LED_TYPE, DATA_PIN, CLOCK_PIN, LED_COLOR_ORDER>(leds, NUM_LEDS);
@@ -145,19 +145,21 @@ void loop() {
     long mm = millis();
     int brightness = 0;
 
-    if (IrReceiver.decode()) {
+    /**if (IrReceiver.decode()) {
       Serial.println(IrReceiver.decodedIRData.decodedRawData, HEX);
-      //IrReceiver.printIRResultShort(&Serial); // optional use new print version
+      IrReceiver.printIRResultShort(&Serial); // optional use new print version
       if (IrReceiver.decodedIRData.decodedRawData != 0x0) {
         channel_selected = "GAME";
       }
       
       IrReceiver.resume(); // Enable receiving of the next value
     }
+    
 
     if(channel_selected != "GAME") {
       return;
     }
+    */
     
     if(stage == "PLAY"){
         if(attacking){

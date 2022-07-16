@@ -1,6 +1,6 @@
 #include "Arduino.h"
 
-class iSin
+ class iSin
 {
   public:
       int convert(long x);
